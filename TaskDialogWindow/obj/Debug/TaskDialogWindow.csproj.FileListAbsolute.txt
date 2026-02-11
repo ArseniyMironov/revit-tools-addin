@@ -1,0 +1,9 @@
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\bin\Debug\TaskDialogWindow.dll
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\bin\Debug\TaskDialogWindow.pdb
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\bin\Debug\Core.Abstractions.dll
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\bin\Debug\Core.Abstractions.pdb
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\obj\Debug\TaskDialogWindow.csproj.AssemblyReference.cache
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\obj\Debug\TaskDialogWindow.csproj.CoreCompileInputs.cache
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\obj\Debug\TaskDial.7A75C0D9.Up2Date
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\obj\Debug\TaskDialogWindow.dll
+C:\Users\ARMI\source\repos\revit-tools-addin\TaskDialogWindow\obj\Debug\TaskDialogWindow.pdb
