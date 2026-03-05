@@ -8,7 +8,10 @@
     {
         public string Id { get; set; }            // Уникальное имя
         public string Version { get; set; }       // "1.0.0"
-        
+
+        // --- ТИП ЗАГРУЗКИ ---
+        public string LoadType { get; set; } = "Startup";
+
         // --- БЕЗОПАСНОСТЬ И КОНТРОЛЬ ---
         public bool IsEnabled { get; set; }       // Стоп-кран
         public string DisableReason { get; set; } // Причина отключения
