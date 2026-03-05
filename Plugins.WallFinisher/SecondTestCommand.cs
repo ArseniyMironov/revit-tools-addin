@@ -13,7 +13,7 @@ namespace Plugins.WallFinisher
         tabName:"ATP Tools",
         panelName:"Архитектура",
         tooltip:"Окно",
-        descriprtion:"Автоматическая окно!")]
+        description:"Автоматическая окно!")]
     public class SecondTestCommand : IPluginCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)

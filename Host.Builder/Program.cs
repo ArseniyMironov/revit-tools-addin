@@ -28,7 +28,8 @@ namespace Host.Builder
         static void Main(string[] args)
         {
             Console.WriteLine("===============================================");
-            Console.WriteLine("          ATP-TLP PLUGIN BUILDER v3.3          ");
+            Console.WriteLine("          ATP-TLP PLUGIN BUILDER v3.5          ");
+            Console.WriteLine("          (Support for LoadType enum)          ");
             Console.WriteLine("===============================================");
 
             // Настройка путей
@@ -148,6 +149,7 @@ namespace Host.Builder
             ref bool changed)
         {
             var entry = plugins.FirstOrDefault(p => p.Id == attr.Id);
+            string loadTypeStr = attr.LoadType.ToString();
 
             if (entry == null)
             {
@@ -159,6 +161,7 @@ namespace Host.Builder
                 {
                     Id = attr.Id,
                     Version = version,
+                    LoadType = loadTypeStr,
                     IsEnabled = true,
                     TabName = attr.TabName,
                     PanelName = attr.PanelName,
@@ -172,11 +175,11 @@ namespace Host.Builder
             }
             else
             {
+                // ЗАЩИТА ОТ ДАУНГРЕЙДА (Debug перезаписывает Release)
                 Version currentVer, newVer;
                 bool parseCurrent = Version.TryParse(entry.Version, out currentVer);
                 bool parseNew = Version.TryParse(version, out newVer);
 
-                // ЗАЩИТА ОТ ДАУНГРЕЙДА (Debug перезаписывает Release)
                 // Если версии валидны и Новая < Старой -> Игнорируем
                 if (parseCurrent && parseNew && newVer < currentVer)
                 {
@@ -190,12 +193,14 @@ namespace Host.Builder
                 string newPath = (folder ?? "").TrimEnd('\\');
                 string oldFile = (entry.MainAssembly ?? "").Trim();
                 string newFile = (assemblyName ?? "").Trim();
+                string oldType = (entry.LoadType ?? "Startup").Trim();
 
                 // ЛОГИРОВАНИЕ СРАВНЕНИЯ
                 bool verChanged = !string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase);
                 bool hashChanged = !string.Equals(entry.BuildHash, hash, StringComparison.OrdinalIgnoreCase);
                 bool pathChanged = !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase);
                 bool fileChanged = !string.Equals(oldFile, newFile, StringComparison.OrdinalIgnoreCase);
+                bool typeChanged = !string.Equals(oldType, loadTypeStr, StringComparison.OrdinalIgnoreCase);
 
                 // --- ДИАГНОСТИКА ---
                 //Console.WriteLine($"   |     [DEBUG] Сравнение для {attr.Id}:");
@@ -204,14 +209,15 @@ namespace Host.Builder
                 //Console.WriteLine($"   |       Равны?:    {!pathChanged}");
 
                 // Проверяем изменения (Версия или Хэш)
-                if (verChanged || hashChanged || pathChanged || fileChanged)
+                if (verChanged || hashChanged || pathChanged || fileChanged || typeChanged)
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine($"   |     [СРАВНЕНИЕ] Обнаружены изменения:");
                     if (verChanged) Console.WriteLine($"   |       Версия: {entry.Version} -> {version}");
                     if (hashChanged) Console.WriteLine($"   |       Хэш:    {entry.BuildHash?.Substring(0, 8)}... -> {hash.Substring(0, 8)}...");
                     if (pathChanged) Console.WriteLine($"   |       Путь:   ОБНОВЛЕН");
-                    if (fileChanged) Console.WriteLine($"   |       Файл:   {entry.MainAssembly} -> {assemblyName}");
+                    if (fileChanged) Console.WriteLine($"   |       Файл:   {entry.MainAssembly} -> {assemblyName}"); 
+                    if (typeChanged) Console.WriteLine($"   |       Тип:    {oldType} -> {loadTypeStr}");
                     Console.ResetColor();
 
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -222,6 +228,7 @@ namespace Host.Builder
                     entry.BuildHash = hash;
                     entry.ServerFolder = folder;
                     entry.MainAssembly = assemblyName;
+                    entry.LoadType = loadTypeStr;
 
                     // UI поля тоже обновляем
                     entry.TabName = attr.TabName;
@@ -257,25 +264,27 @@ namespace Host.Builder
                         {
                             var args = attr.ConstructorArguments;
 
-                            // НОВЫЙ ПОРЯДОК АРГУМЕНТОВ (после удаления Version из конструктора):
+                            // ПОРЯДОК АРГУМЕНТОВ:
                             // 0: id
                             // 1: name
-                            // 2: tabName  <-- Сдвинулось влево
-                            // 3: panelName
-                            // 4: tooltip
-                            // 5: description
+                            // 2: loadType
+                            // 3: tabName
+                            // 4: panelName
+                            // 5: tooltip
+                            // 6: description
 
                             try
                             {
                                 string id = args[0].Value?.ToString();
                                 string name = args[1].Value?.ToString();
-                                string tab = args[2].Value?.ToString();
-                                string panel = args[3].Value?.ToString();
-                                string tip = args.Count > 4 ? args[4].Value?.ToString() : "";
-                                string desc = args.Count > 5 ? args[5].Value?.ToString() : "";
+                                PluginLoadType loadType = (PluginLoadType)Convert.ToInt32(args[2].Value);
+                                string tab = args[3].Value?.ToString();
+                                string panel = args[4].Value?.ToString();
+                                string tip = args.Count > 5 ? args[5].Value?.ToString() : "";
+                                string desc = args.Count > 6 ? args[6].Value?.ToString() : "";
 
                                 // Создаем объект без версии
-                                var pluginAttr = new RevitPluginAttribute(id, name, tab, panel, tip, desc);
+                                var pluginAttr = new RevitPluginAttribute(id, name, loadType, tab, panel, tip, desc);
                                 results.Add(pluginAttr);
                             }
                             catch (Exception ex)
