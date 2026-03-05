@@ -21,7 +21,7 @@ namespace Plugins.WallFinisher
             var assembly = Assembly.GetExecutingAssembly();
             var version = assembly.GetName().Version.ToString();
 
-            TaskDialog.Show("Wall Finisher", $"Привет! Это уже версия плагина {version}, загруженная через Shadow Copy. Слово!");
+            TaskDialog.Show("Wall Finisher", $"Привет! Это уже версия плагина {version}, загруженная через Shadow Copy. И слово было Плаг!");
 
             return Result.Succeeded;
         }

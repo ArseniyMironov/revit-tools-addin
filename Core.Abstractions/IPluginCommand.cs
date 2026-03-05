@@ -19,20 +19,29 @@ namespace Core.Abstractions
     {
         public string Id { get; }
         public string Name { get; }
+        public PluginLoadType LoadType { get; }
         public string TabName { get; }
         public string PanelName { get; }
-        public string ImageResource { get; }
         public string Tooltip { get; }
         public string Description { get; }
+        public string ImageResource { get; }
 
-        public RevitPluginAttribute(string id, string name, string tabName, string panelName, string tooltip, string descriprtion)
+        public RevitPluginAttribute(
+            string id,
+            string name,
+            PluginLoadType loadType = PluginLoadType.Startup,
+            string tabName = "",
+            string panelName = "",
+            string tooltip = "",
+            string description = "")
         {
             Id = id;
             Name = name;
+            LoadType = loadType;
             TabName = tabName;
             PanelName = panelName;
             Tooltip = tooltip;
-            Description = descriprtion;
+            Description = description;
         }
     }
 }
