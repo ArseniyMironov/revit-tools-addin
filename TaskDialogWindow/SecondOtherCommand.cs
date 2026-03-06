@@ -10,6 +10,7 @@ namespace TaskDialogWindow
     [RevitPlugin(
         id:"SecoondOther",
         name:"Oh? no2",
+        loadType: PluginLoadType.OnClick,
         tabName:"ATP Tools",
         panelName:"Архитектура",
         tooltip:"Окно",

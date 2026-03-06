@@ -1,6 +1,0 @@
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\bin\Debug\Core.Abstractions.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\bin\Debug\Core.Abstractions.pdb
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\obj\Debug\Core.Abstractions.csproj.AssemblyReference.cache
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\obj\Debug\Core.Abstractions.csproj.CoreCompileInputs.cache
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\obj\Debug\Core.Abstractions.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Core.Abstractions\obj\Debug\Core.Abstractions.pdb

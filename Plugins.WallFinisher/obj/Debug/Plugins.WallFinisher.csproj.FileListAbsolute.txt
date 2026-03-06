@@ -1,9 +1,0 @@
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\bin\Debug\Plugins.WallFinisher.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\bin\Debug\Plugins.WallFinisher.pdb
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\bin\Debug\Core.Abstractions.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\bin\Debug\Core.Abstractions.pdb
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\obj\Debug\Plugins.WallFinisher.csproj.AssemblyReference.cache
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\obj\Debug\Plugins.WallFinisher.csproj.CoreCompileInputs.cache
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\obj\Debug\Plugins..CAFBCFD7.Up2Date
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\obj\Debug\Plugins.WallFinisher.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Plugins.WallFinisher\obj\Debug\Plugins.WallFinisher.pdb

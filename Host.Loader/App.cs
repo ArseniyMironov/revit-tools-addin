@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Host.Loader
@@ -23,10 +24,16 @@ namespace Host.Loader
 
                 if (plugins == null) return Result.Succeeded;
 
-                foreach (var meta in plugins)
-                {
-                    if (!meta.IsEnabled) continue;
+                // 3. ЛЕНИВАЯ ЗАГРУЗКА (Кнопки UI)
+                var uiPlugins = plugins.Where(p =>
+                    p.IsEnabled &&
+                    !string.Equals(p.LoadType, "Startup", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(p.TabName) &&
+                    !string.IsNullOrWhiteSpace(p.PanelName)
+                ).ToList();
 
+                foreach (var meta in uiPlugins)
+                {
                     DynamicCommandBuilder.CreateProxyCommandType(meta.Id);
                 }
 
@@ -34,7 +41,7 @@ namespace Host.Loader
                 string proxyAssemblyPath = DynamicCommandBuilder.GetProxyDllPath();
 
                 // Построение UI
-                foreach (var meta in plugins)
+                foreach (var meta in uiPlugins)
                 {
                     if (!meta.IsEnabled) continue;
 
@@ -60,14 +67,29 @@ namespace Host.Loader
 
                     // Создание кнопки
                     PushButtonData btnData = new PushButtonData(
-                        $"btn_{meta.Id}", 
-                        meta.ButtonTitle ?? meta.Id, 
-                        proxyAssemblyPath, 
+                        $"btn_{meta.Id}",
+                        meta.ButtonTitle ?? meta.Id,
+                        proxyAssemblyPath,
                         $"ProxyCommand_{meta.Id}"
                     );
 
                     btnData.ToolTip = meta.Tooltip;
                     panel.AddItem(btnData);
+                }
+
+                // 4. ХОЛОДНАЯ ЗАГРУЗКА (Фоновые плагины)
+                var startupPlugins = plugins.Where(p => p.IsEnabled && string.Equals(p.LoadType, "Startup", StringComparison.OrdinalIgnoreCase)).ToList();
+
+                foreach (var meta in startupPlugins)
+                {
+                    try
+                    {
+                        PluginManager.initializeStartupPlugin(meta, application);
+                    }
+                    catch (Exception ex)
+                    {
+                        TaskDialog.Show("Startup Error", $"Ошибка запуска фонового плагина {meta.Id}:\n{ex.Message}");
+                    }
                 }
 
                 return Result.Succeeded;

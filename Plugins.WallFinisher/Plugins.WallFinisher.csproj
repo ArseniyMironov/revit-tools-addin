@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="SecondTestCommand.cs" />
+    <Compile Include="TestStartupApp.cs" />
     <Compile Include="WallFinishCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

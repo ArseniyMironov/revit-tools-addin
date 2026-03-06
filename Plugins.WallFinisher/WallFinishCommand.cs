@@ -10,6 +10,7 @@ namespace Plugins.WallFinisher
     [RevitPlugin(
         id:"WallFinisher", 
         name:"Отделка Стен", 
+        loadType: PluginLoadType.OnClick,
         tabName:"ATP Tools", 
         panelName:"Архитектура",
         tooltip:"Окно",
