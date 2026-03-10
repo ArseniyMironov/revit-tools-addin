@@ -1,5 +1,20 @@
-﻿namespace Host.Loader
+﻿using System.Collections.Generic;
+
+namespace Host.Loader
 {
+
+    public class HostData
+    {
+        public string Version { get; set; } = "1.0.0.0";
+        public string ServerFolder { get; set; } = "";
+    }
+
+    public class PluginManifest
+    {
+        public HostData Host { get; set; } = new HostData();
+        public List<PluginMetadata> Plugins { get; set; } = new List<PluginMetadata>();
+    }
+
     /// <summary>
     /// Единый контракт данных для plugins.json
     /// Используется и Билдером (для записи), и Хостом (для чтения).

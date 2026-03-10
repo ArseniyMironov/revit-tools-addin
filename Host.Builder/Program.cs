@@ -28,8 +28,7 @@ namespace Host.Builder
         static void Main(string[] args)
         {
             Console.WriteLine("===============================================");
-            Console.WriteLine("          ATP-TLP PLUGIN BUILDER v3.5          ");
-            Console.WriteLine("          (Support for LoadType enum)          ");
+            Console.WriteLine("          ATP-TLP PLUGIN BUILDER v3.6          ");
             Console.WriteLine("===============================================");
 
             // Настройка путей
@@ -43,7 +42,8 @@ namespace Host.Builder
             {
                 // 1. Загрузка базы
                 Console.Write("Чтение plugins.json... ");
-                List<PluginMetadata> existingPlugins = LoadCurrentPlugins(); 
+                PluginManifest manifest = LoadManifest();
+                List<PluginMetadata> existingPlugins = manifest.Plugins; 
                 Console.WriteLine($"Найдено записей: {existingPlugins.Count}");
                 bool jsonChanged = false;
 
@@ -116,7 +116,7 @@ namespace Host.Builder
                 Console.WriteLine("\n-----------------------------------------------------------");
                 if (jsonChanged)
                 {
-                    SavePlugins(existingPlugins);
+                    SaveManifest(manifest);
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("ИТОГ: JSON успешно обновлен и сохранен.");
                 }
@@ -353,9 +353,9 @@ namespace Host.Builder
                    name.EndsWith(".xml");
         }
 
-        static List<PluginMetadata> LoadCurrentPlugins()
+        static PluginManifest LoadManifest()
         {
-            if (!File.Exists(JSON_PATH)) return new List<PluginMetadata>();
+            if (!File.Exists(JSON_PATH)) return new PluginManifest();
 
             string json = File.ReadAllText(JSON_PATH);
             var options = new JsonSerializerOptions
@@ -366,19 +366,19 @@ namespace Host.Builder
 
             try
             {
-                return JsonSerializer.Deserialize<List<PluginMetadata>>(json, options) ?? new List<PluginMetadata>();
+                return JsonSerializer.Deserialize<PluginManifest>(json, options) ?? new PluginManifest();
             }
-            catch { return new List<PluginMetadata>(); }
+            catch { return new PluginManifest(); }
         }
 
-        static void SavePlugins(List<PluginMetadata> plugins)
+        static void SaveManifest(PluginManifest manifest)
         {
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
             };
-            string json = JsonSerializer.Serialize(plugins, options);
+            string json = JsonSerializer.Serialize(manifest, options);
             File.WriteAllText(JSON_PATH, json);
         }
 
