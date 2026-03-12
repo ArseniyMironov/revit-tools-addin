@@ -2,7 +2,6 @@ C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Host.Build
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Host.Builder.exe
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Host.Builder.pdb
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Core.Abstractions.dll
-C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Host.Loader.dll
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Mono.Cecil.dll
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Mono.Cecil.Mdb.dll
@@ -17,7 +16,6 @@ C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\System.Tex
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\System.Text.Json.dll
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\System.Threading.Tasks.Extensions.dll
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Core.Abstractions.pdb
-C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Host.Loader.pdb
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Microsoft.Bcl.AsyncInterfaces.xml
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Mono.Cecil.pdb
 C:\Users\ARMI\source\repos\revit-tools-addin\Host.Builder\bin\Release\Mono.Cecil.Mdb.pdb

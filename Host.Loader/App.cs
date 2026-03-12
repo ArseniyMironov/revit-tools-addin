@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.UI;
+using Core.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -116,18 +117,34 @@ namespace Host.Loader
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            PluginManager.ShutdownStartupPlugins(application);
-
-            // ЗАПУСК СКРИПТА ОБНОВЛЕНИЯ ХОСТА ПОСЛЕ ЗАКРЫТИЯ REVIT
-            if (_needHostUpdate && File.Exists(_updaterScriptPath))
+            try
             {
-                Process.Start(new ProcessStartInfo
+                if (_needHostUpdate && !string.IsNullOrEmpty(_updaterScriptPath) && File.Exists(_updaterScriptPath))
                 {
-                    FileName = _updaterScriptPath,
-                    UseShellExecute = true,
-                    CreateNoWindow = false,
-                    WindowStyle = ProcessWindowStyle.Normal
-                });
+                    // Явный вызов командной строки
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = $"/c \"{_updaterScriptPath}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = false
+                    };
+
+                    Process.Start(startInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "HostShutdown_Error.txt"), ex.ToString());
+            }
+
+            try
+            {
+                PluginManager.ShutdownStartupPlugins(application);
+            }
+            catch
+            {
+
             }
 
             return Result.Succeeded;
@@ -136,42 +153,84 @@ namespace Host.Loader
         // --- ЛОГИКА ГЕНЕРАЦИИ СКРИПТА ОБНОВЛЕНИЯ ---
         private void CheckHostForUpdates(HostData hostData)
         {
-            if (hostData == null || string.IsNullOrWhiteSpace(hostData.ServerFolder)) 
+            // ПРОВЕРКА 1: Пришли ли данные из JSON вообще?
+            if (hostData == null)
+            {
+                //TaskDialog.Show("DEBUG", "hostData == null. JSON не прочитался или структура неверная.");
                 return;
+            }
+
+            // ПРОВЕРКА 2: Заполнен ли путь к серверной папке?
+            if (string.IsNullOrWhiteSpace(hostData.ServerFolder))
+            {
+                //TaskDialog.Show("DEBUG", $"ServerFolder пуст! Версия в JSON: {hostData.Version}. Билдер не записал путь к Хосту.");
+                return;
+            }
 
             try
             {
-                // Текущая версия этого файла (Host.Loader.dll)
                 Version currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+                // ПРОВЕРКА 3: Что видит программа?
+                //TaskDialog.Show("DEBUG", $"Текущая (локальная) версия: {currentVersion}\nВерсия в JSON: {hostData.Version}");
 
                 if (Version.TryParse(hostData.Version, out Version serverVersion))
                 {
                     if (serverVersion > currentVersion)
                     {
-                        // Определяем, где физически установлен наш плагин
-                        string localHostDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                        string localHostDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location).TrimEnd('\\');
                         string serverDir = hostData.ServerFolder.TrimEnd('\\');
 
                         _updaterScriptPath = Path.Combine(Path.GetTempPath(), "ATP_HostUpdater.bat");
 
-                        // Пишем скрипт. Он ждет 30 секунды (пока процесс Revit окончательно умрет),
-                        // затем копирует новые файлы Хоста из серверной папки поверх текущих и самоудаляется.
                         string batContent = $@"@echo off
-                                                echo Выполняется обновление системного ядра ATP BIM...
-                                                echo Пожалуйста, подождите.
-                                                timeout /t 30 /nobreak >nul
-                                                xcopy /Y /E /I ""{serverDir}\*"" ""{localHostDir}\""
-                                                del ""%~f0""
-                                                ";
+chcp 65001 >nul
+setlocal enabledelayedexpansion
+set LOG_FILE=""%TEMP%\HostUpdateLog.txt""
+echo [%time%] Старт обновления... > !LOG_FILE!
+echo Путь сервера: ""{serverDir}"" >> !LOG_FILE!
+echo Локальный путь: ""{localHostDir}"" >> !LOG_FILE!
 
-                        // Обязательно в 866 кодировке, чтобы кириллица в консоли отображалась нормально
+set tryCount=0
+:loop
+timeout /t 2 /nobreak >nul
+echo [%time%] Попытка !tryCount! >> !LOG_FILE!
+
+xcopy /Y /E /I ""{serverDir}\*"" ""{localHostDir}"" >> !LOG_FILE! 2>&1
+
+if !errorlevel! neq 0 (
+    set /a tryCount+=1
+    if !tryCount! lss 15 goto loop
+)
+
+echo [%time%] Завершено с кодом: !errorlevel! >> !LOG_FILE!
+del ""%~f0""
+";
                         File.WriteAllText(_updaterScriptPath, batContent, System.Text.Encoding.GetEncoding(866));
 
                         _needHostUpdate = true;
+
+                        // ПРОВЕРКА 4: Скрипт записан успешно
+                        //TaskDialog.Show("DEBUG", "Скрипт .bat успешно сгенерирован в Temp!");
+
+                        // Вызов Toast вынесен в конец, чтобы проверить, не падает ли он
+                        Core.Abstractions.Toast.Show("Доступно обновление ядра...", 7);
+                    }
+                    else
+                    {
+                        //TaskDialog.Show("DEBUG", "Серверная версия НЕ больше текущей (по логике кода).");
                     }
                 }
+                else
+                {
+                    //TaskDialog.Show("DEBUG", "Ошибка TryParse: не удалось распознать формат версии из JSON.");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // ПРОВЕРКА 5: Ловим скрытую ошибку
+                TaskDialog.Show("DEBUG FATAL ERROR", ex.ToString());
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Core.Abstractions;
-using Host.Loader;
 using Mono.Cecil;
 using System;
 using System.Collections.Generic;
@@ -25,6 +24,8 @@ namespace Host.Builder
         // Путь к файлу манифеста
         private static string JSON_PATH;
 
+        private static string HOST_SERVER_ROOT;
+
         static void Main(string[] args)
         {
             Console.WriteLine("===============================================");
@@ -35,6 +36,7 @@ namespace Host.Builder
             SOLUTION_ROOT_DIR = Environment.ExpandEnvironmentVariables(@"C:\Users\ARMI\source\repos\revit-tools-addin");
             SERVER_ROOT = @"P:\MOS-TLP\GROUPS\ALLGEMEIN\02_ATP_STANDARDS\07_BIM\01_Settings\01_Add-Ins\001_ATP_Common_Plugin\01_Dev\01_Prod";
             JSON_PATH = Path.Combine(SERVER_ROOT, "plugins.json");
+            HOST_SERVER_ROOT = @"P:\MOS-TLP\GROUPS\ALLGEMEIN\02_ATP_STANDARDS\07_BIM\01_Settings\01_Add-Ins\001_ATP_Common_Plugin\01_Dev\01_Prod\Host";
 
             if (!ValidatePaths()) return;
 
@@ -55,17 +57,54 @@ namespace Host.Builder
 
                 foreach (var dllPath in allDllFiles)
                 {
-                    // ФИЛЬТРЫ: Отсекаем мусор
+                    // ФИЛЬТРЫ: Отсекаем мусор 
                     // 1. Игнорируем файлы внутри папок 'obj' (промежуточная сборка)
-                    if (dllPath.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")) continue;
+                    if (dllPath.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+                        continue;
 
                     string fileName = Path.GetFileName(dllPath);
-                    if (IsSystemFile(fileName)) continue;
+                    if (IsSystemFile(fileName)) 
+                        continue;
 
                     try
                     {
                         using (var assembly = AssemblyDefinition.ReadAssembly(dllPath))
                         {
+                            if (fileName.Equals("Host.Loader.dll", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string hostVersion = assembly.Name.Version.ToString();
+
+                                Version currentHostVer;
+                                if (!Version.TryParse(manifest.Host.Version, out currentHostVer))
+                                    currentHostVer = new Version("0.0.0.0");
+
+                                Version newHostVer;
+                                if (!Version.TryParse(hostVersion, out newHostVer))
+                                    newHostVer = new Version("1.0.0.0");
+
+                                if (newHostVer > currentHostVer)
+                                {
+                                    string currentSourceHostDir = Path.GetDirectoryName(dllPath);
+
+                                    Console.ForegroundColor = ConsoleColor.Magenta;
+                                    Console.WriteLine("\n-----------------------------------------------------------");
+                                    Console.WriteLine($"[НАЙДЕНО ОБНОВЛЕНИЕ ЯДРА] Host.Loader.dll");
+                                    Console.WriteLine($"   |-- Путь: {currentSourceHostDir}");
+                                    Console.WriteLine($"   |-- Версия: {manifest.Host.Version} -> {hostVersion}");
+                                    Console.WriteLine($"   |     Деплой в: {HOST_SERVER_ROOT}");
+                                    Console.ResetColor();
+
+                                    manifest.Host.Version = hostVersion;
+                                    manifest.Host.ServerFolder = HOST_SERVER_ROOT;
+
+                                    // Деплоим файлы ядра
+                                    DeployFiles(currentSourceHostDir, HOST_SERVER_ROOT);
+                                    jsonChanged = true;
+                                }
+
+                                continue;
+                            }
+
                             var commands = ExtractPluginAttributes(assembly);
 
                             // Если в DLL нет наших плагинов — пропускаем молча (это может быть просто библиотека)
@@ -355,7 +394,8 @@ namespace Host.Builder
 
         static PluginManifest LoadManifest()
         {
-            if (!File.Exists(JSON_PATH)) return new PluginManifest();
+            if (!File.Exists(JSON_PATH)) 
+                return new PluginManifest();
 
             string json = File.ReadAllText(JSON_PATH);
             var options = new JsonSerializerOptions
@@ -368,7 +408,10 @@ namespace Host.Builder
             {
                 return JsonSerializer.Deserialize<PluginManifest>(json, options) ?? new PluginManifest();
             }
-            catch { return new PluginManifest(); }
+            catch 
+            { 
+                return new PluginManifest(); 
+            }
         }
 
         static void SaveManifest(PluginManifest manifest)

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Host.Loader
+namespace Core.Abstractions
 {
 
     public class HostData
