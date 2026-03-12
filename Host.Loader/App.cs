@@ -28,11 +28,23 @@ namespace Host.Loader
                 var repo = new JsonRepository(CONFIG_PATH);
                 var manifest = repo.GetManifest();
 
+                // Инициализация логгера (папка Logs рядом с plugins.json) (пока передаем логин Windows как временную заглушку)
+                string logFolder = Path.Combine(Path.GetDirectoryName(CONFIG_PATH), "Logs");
+                Core.Abstractions.Logger.Initialize(logFolder, Environment.UserName);
+                Core.Abstractions.Logger.Info("Host.Loader", "Revit Started");
+
+                application.Idling += Application_Idling;
+
                 // ---------------------------------------------------------
                 // ПРОВЕРКА ОБНОВЛЕНИЙ САМОГО ЗАГРУЗЧИКА
                 // --------------------------------------------------------
 
                 CheckHostForUpdates(manifest?.Host);
+
+                // ---------------------------------------------------------
+                // АСИНХРОННАЯ ОЧИСТКА УСТАРЕВШЕГО КЭША
+                // ---------------------------------------------------------
+                PluginManager.CleanupCacheAsync(manifest?.Plugins);
 
                 var plugins = manifest?.Plugins;
                 if (plugins == null) return Result.Succeeded;
@@ -87,7 +99,16 @@ namespace Host.Loader
                         $"ProxyCommand_{meta.Id}"
                     );
 
+                    // УСТАНОВКА ПОДСКАЗКИ
                     btnData.ToolTip = meta.Tooltip;
+
+                    // УСТАНОВКА ИКОНКИ
+                    var icon = GetIconFromBase64(meta.IconBase64);
+                    if (icon != null)
+                    {
+                        btnData.LargeImage = icon;
+                    }
+
                     panel.AddItem(btnData);
                 }
 
@@ -98,7 +119,7 @@ namespace Host.Loader
                 {
                     try
                     {
-                        PluginManager.initializeStartupPlugin(meta, application);
+                        PluginManager.InitializeStartupPlugin(meta, application);
                     }
                     catch (Exception ex)
                     {
@@ -132,6 +153,9 @@ namespace Host.Loader
 
                     Process.Start(startInfo);
                 }
+
+                Core.Abstractions.Logger.Info("Host.Loader", "Revit Shutdown");
+                Core.Abstractions.Logger.Shutdown();
             }
             catch (Exception ex)
             {
@@ -230,6 +254,48 @@ del ""%~f0""
             {
                 // ПРОВЕРКА 5: Ловим скрытую ошибку
                 TaskDialog.Show("DEBUG FATAL ERROR", ex.ToString());
+            }
+        }
+
+        private System.Windows.Media.ImageSource GetIconFromBase64(string base64String)
+        {
+            if (string.IsNullOrWhiteSpace(base64String)) 
+                return null;
+
+            try
+            {
+                byte[] imageBytes = Convert.FromBase64String(base64String);
+                using (var ms = new MemoryStream(imageBytes))
+                {
+                    var image = new System.Windows.Media.Imaging.BitmapImage();
+                    image.BeginInit();
+                    image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    image.StreamSource = ms;
+                    image.EndInit();
+                    image.Freeze(); // Замораживаем объект для безопасного использования в UI-потоке Revit
+                    return image;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void Application_Idling(object sender, Autodesk.Revit.UI.Events.IdlingEventArgs e)
+        {
+            // В момент этого события sender является полноценным UIApplication
+            var uiApp = sender as UIApplication;
+            if (uiApp != null)
+            {
+                // Берем Username из настроек Revit
+                string realRevitUser = uiApp.Application.Username;
+
+                // Обновляем имя в логгере
+                Core.Abstractions.Logger.SetRevitUserName(realRevitUser);
+
+                // отписываемся от события, чтобы оно не срабатывало каждую секунду
+                uiApp.Idling -= Application_Idling;
             }
         }
     }

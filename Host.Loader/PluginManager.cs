@@ -124,7 +124,7 @@ namespace Host.Loader
         // =========================================================
         // ХОЛОДНАЯ ЗАГРУЗКА (ФОНОВЫЕ ПРОЦЕССЫ - STARTUP)
         // =========================================================
-        public static void initializeStartupPlugin(PluginMetadata meta, UIControlledApplication app)
+        public static void InitializeStartupPlugin(PluginMetadata meta, UIControlledApplication app)
         {
             var manager = new PluginManager();
             manager.InitializeStartupInternal(meta, app);
@@ -143,9 +143,11 @@ namespace Host.Loader
                     var attr = type.GetCustomAttribute<RevitPluginAttribute>();
                     if (attr != null && string.Equals(attr.Id, meta.Id, StringComparison.OrdinalIgnoreCase))
                     {
-                        var appInsatnce = (IPluginApplication)Activator.CreateInstance(type);
-                        appInsatnce.OnStartup(app);
-                        _runningApplication.Add(appInsatnce);
+                        var appInstance = (IPluginApplication)Activator.CreateInstance(type);
+                        appInstance.OnStartup(app);
+                        _runningApplication.Add(appInstance);
+
+                        Logger.Info(meta.Id, "Startup Plugin Loaded");
                         break;
                     }
                 }
@@ -219,10 +221,14 @@ namespace Host.Loader
                 }
 
                 var commandInstance = (IPluginCommand)Activator.CreateInstance(commandType);
+
+                Logger.Info(pluginId, "Command Executed");
+
                 return commandInstance.Execute(data, ref msg, elem);
             }
             catch (Exception ex)
             {
+                Logger.Error(pluginId, "Execution crashed", ex);
                 TaskDialog.Show("CRITICAL ERROR", $"Unexpected error: {ex.Message}");
                 msg = ex.Message;
                 return Result.Failed;
@@ -293,6 +299,78 @@ namespace Host.Loader
                 catch
                 {
 
+                }
+            });
+        }
+
+        // =========================================================
+        // ОЧИСТКА КЭША (Удаление старых версий плагинов)
+        // =========================================================
+        public static void CleanupCacheAsync(List<PluginMetadata> activePlugins)
+        {
+            Task.Run(() => 
+            {
+                try
+                {
+                    string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    string localCacheDir = Path.Combine(appData, "ATP-TLP", "RevitPlugins", "Cache");
+
+                    if (!Directory.Exists(localCacheDir))
+                        return;
+
+                    // Создаем словарь актуальных версий для быстрого поиска: ID -> Версия
+                    var activeVersions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    if (activePlugins != null)
+                    {
+                        foreach (var plugin in activePlugins)
+                        {
+                            if (!string.IsNullOrEmpty(plugin.Id) && !string.IsNullOrEmpty(plugin.Version))
+                            {
+                                activeVersions[plugin.Id] = plugin.Version;
+                            }
+                        }
+                    }
+
+                    // Перебираем все папки плагинов в кэше
+                    foreach (var pluginFolder in Directory.GetDirectories(localCacheDir))
+                    {
+                        string pluginId = Path.GetFileName(pluginFolder);
+
+                        // Если плагина вообще больше нет в JSON - удаляем его папку целиком
+                        if (!activeVersions.ContainsKey(pluginId))
+                        {
+                            try
+                            {
+                                Directory.Delete(pluginFolder, true);
+                            }
+                            catch { }
+
+                            continue;
+                        }
+
+                        string activeVersion = activeVersions[pluginId];
+
+                        // Перебираем папки версий внутри папки конкретного плагина
+                        foreach (var versionFolder in Directory.GetDirectories(pluginFolder))
+                        {
+                            string version = Path.GetFileName(versionFolder);
+
+                            // Если имя папки не совпадает с актуальной версией из JSON - удаляем
+                            if (!string.Equals(version, activeVersion, StringComparison.OrdinalIgnoreCase))
+                            {
+                                try
+                                {
+                                    Directory.Delete(versionFolder, true);
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                catch 
+                {
+                    // Глобальный перехват: так как это фоновый поток очистки мусора, 
+                    // любые ошибки доступа к файлам просто игнорируем, чтобы не тревожить пользователя.
                 }
             });
         }

@@ -41,6 +41,6 @@ namespace Core.Abstractions
         public string PanelName { get; set; }
         public string ButtonTitle { get; set; }
         public string Tooltip { get; set; }
-        //public string ImageName { get; set; }
+        public string IconBase64 { get; set; }
     }
 }

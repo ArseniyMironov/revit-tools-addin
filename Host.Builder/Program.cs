@@ -134,13 +134,31 @@ namespace Host.Builder
                                 string targetVersionFolder = Path.Combine(SERVER_ROOT, attr.Id, fileVersion);
                                 string deployedAssemblyPath = Path.Combine(targetVersionFolder, fileName);
 
+                                // --- ЧТЕНИЕ ИКОНКИ ---
+                                string iconPath = Path.Combine(currentSourceDir, $"{attr.Id}.png");
+                                string iconBase64 = null;
+                                if (File.Exists(iconPath))
+                                {
+                                    try
+                                    {
+                                        byte[] imageBytes = File.ReadAllBytes(iconPath);
+                                        iconBase64 = Convert.ToBase64String(imageBytes);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.ForegroundColor = ConsoleColor.Yellow;
+                                        Console.WriteLine($"   |     [WARN] Не удалось прочитать иконку: {ex.Message}");
+                                        Console.ResetColor();
+                                    }
+                                }
+
                                 // Деплоим файлы
                                 Console.WriteLine($"   |     Деплой в: ...\\{attr.Id}\\{fileVersion}\\");
                                 DeployFiles(currentSourceDir, targetVersionFolder);
 
                                 string newHash = ComputeMD5(deployedAssemblyPath);
 
-                                UpdateOrAddPlugin(existingPlugins, attr, fileVersion, newHash, targetVersionFolder, fileName, ref jsonChanged);
+                                UpdateOrAddPlugin(existingPlugins, attr, fileVersion, newHash, targetVersionFolder, fileName, iconBase64, ref jsonChanged);
                             }
                         }
                     }
@@ -185,6 +203,7 @@ namespace Host.Builder
             string hash,
             string folder,
             string assemblyName,
+            string iconBase64,
             ref bool changed)
         {
             var entry = plugins.FirstOrDefault(p => p.Id == attr.Id);
@@ -208,7 +227,8 @@ namespace Host.Builder
                     Tooltip = attr.Tooltip,
                     BuildHash = hash,
                     ServerFolder = folder,
-                    MainAssembly = assemblyName
+                    MainAssembly = assemblyName,
+                    IconBase64 = iconBase64
                 });
                 changed = true;
             }
@@ -240,6 +260,7 @@ namespace Host.Builder
                 bool pathChanged = !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase);
                 bool fileChanged = !string.Equals(oldFile, newFile, StringComparison.OrdinalIgnoreCase);
                 bool typeChanged = !string.Equals(oldType, loadTypeStr, StringComparison.OrdinalIgnoreCase);
+                bool iconChanged = !string.Equals(entry.IconBase64 ?? "", iconBase64 ?? "");
 
                 // --- ДИАГНОСТИКА ---
                 //Console.WriteLine($"   |     [DEBUG] Сравнение для {attr.Id}:");
@@ -257,6 +278,7 @@ namespace Host.Builder
                     if (pathChanged) Console.WriteLine($"   |       Путь:   ОБНОВЛЕН");
                     if (fileChanged) Console.WriteLine($"   |       Файл:   {entry.MainAssembly} -> {assemblyName}"); 
                     if (typeChanged) Console.WriteLine($"   |       Тип:    {oldType} -> {loadTypeStr}");
+                    if (iconChanged) Console.WriteLine($"   |       Иконка: ОБНОВЛЕНА");
                     Console.ResetColor();
 
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -268,6 +290,7 @@ namespace Host.Builder
                     entry.ServerFolder = folder;
                     entry.MainAssembly = assemblyName;
                     entry.LoadType = loadTypeStr;
+                    entry.IconBase64 = iconBase64;
 
                     // UI поля тоже обновляем
                     entry.TabName = attr.TabName;

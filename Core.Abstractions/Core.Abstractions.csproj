@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="IPluginApplication.cs" />
     <Compile Include="IPluginCommand.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="PluginLoadType.cs" />
     <Compile Include="PluginMetadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
