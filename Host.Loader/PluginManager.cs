@@ -177,7 +177,8 @@ namespace Host.Loader
         {
             try
             {
-                PluginMetadata meta = _repository.GetPlugin(pluginId);
+                PluginMetadata meta = _repository.GetPlugin(pluginId); 
+
 
                 if (meta == null)
                 {

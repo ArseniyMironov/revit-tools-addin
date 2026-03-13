@@ -32,9 +32,11 @@ namespace Core.Abstractions
                 _cts = new CancellationTokenSource();
                 Task.Run(() => FlushLoop(_cts.Token));
             }
-            catch
+            catch (Exception ex)
             {
-                // Игнорируем ошибки создания папки на сервере (нет прав и т.д.)
+                // Записываем реальную причину сбоя в Temp
+                string errorPath = Path.Combine(Path.GetTempPath(), "Logger_Init_Error.txt");
+                File.WriteAllText(errorPath, $"Не удалось создать папку логов: {logDirectory}\n{ex.Message}");
             }
         }
 
