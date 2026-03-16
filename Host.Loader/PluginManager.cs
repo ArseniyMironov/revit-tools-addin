@@ -26,10 +26,9 @@ namespace Host.Loader
 
         public PluginManager()
         {
-            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            _localCacheDir = Path.Combine(appData, "ATP-TLP", "RevitPlugins", "Cache");
-            _shadowCopyDir = Path.Combine(Path.GetTempPath(), "ATP-TLP", "RevitPlugins", "Shadow");
-            _repository = new JsonRepository(@"P:\MOS-TLP\GROUPS\ALLGEMEIN\02_ATP_STANDARDS\07_BIM\01_Settings\01_Add-Ins\001_ATP_Common_Plugin\01_Dev\01_Prod\plugins.json");
+            _localCacheDir = HostEnvironment.LocalCacheDir;
+            _shadowCopyDir = HostEnvironment.ShadowCopyDir;
+            _repository = new JsonRepository(HostEnvironment.ServerConfigPath);
         }
 
         // =========================================================
@@ -178,7 +177,6 @@ namespace Host.Loader
             try
             {
                 PluginMetadata meta = _repository.GetPlugin(pluginId); 
-
 
                 if (meta == null)
                 {

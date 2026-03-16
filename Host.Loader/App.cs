@@ -11,8 +11,6 @@ namespace Host.Loader
 {
     public class App : IExternalApplication
     {
-        private const string CONFIG_PATH = @"P:\MOS-TLP\GROUPS\ALLGEMEIN\02_ATP_STANDARDS\07_BIM\01_Settings\01_Add-Ins\001_ATP_Common_Plugin\01_Dev\01_Prod\plugins.json";
-
         // Переменные для обновления Хоста
         private static bool _needHostUpdate = false;
         private static string _updaterScriptPath = string.Empty;
@@ -20,16 +18,18 @@ namespace Host.Loader
         public Result OnStartup(UIControlledApplication application)
         {
             try
-            {
+            {// Убеждаемся, что базовые локальные папки существуют
+                HostEnvironment.InitializeDirectories();
+
                 // Инициализация генератора динамических классов
                 DynamicCommandBuilder.Initialize();
 
                 // Чтение конфига
-                var repo = new JsonRepository(CONFIG_PATH);
+                var repo = new JsonRepository(HostEnvironment.ServerConfigPath);
                 var manifest = repo.GetManifest();
 
                 // Инициализация логгера (папка Logs рядом с plugins.json) (пока передаем логин Windows как временную заглушку)
-                string logFolder = Path.Combine(Path.GetDirectoryName(CONFIG_PATH), "Logs");
+                string logFolder = Path.Combine(Path.GetDirectoryName(HostEnvironment.LogsDir), "Logs");
                 Core.Abstractions.Logger.Initialize(logFolder, Environment.UserName);
                 Core.Abstractions.Logger.Info("Host.Loader", "Revit Started");
 

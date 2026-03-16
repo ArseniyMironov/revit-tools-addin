@@ -17,11 +17,6 @@ namespace Core.Abstractions
     [AttributeUsage(AttributeTargets.Class, Inherited = false,  AllowMultiple = false)]
     public class RevitPluginAttribute : Attribute
     {
-        private string tab;
-        private string panel;
-        private string tip;
-        private string desc;
-
         public string Id { get; }
         public string Name { get; }
         public PluginLoadType LoadType { get; }
